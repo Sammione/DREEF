@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 from dotenv import load_dotenv
 
-from database import store_chat_history, get_chat_history
+from database import store_chat_history, get_chat_history, get_all_sessions
 from openai_service import generate_chat_response
 from rag_service import search_kb, initialize_mock_kb, add_document_to_kb
 from sharepoint_service import list_files_in_document_library, download_file_content, extract_text_from_binary
@@ -233,9 +233,15 @@ async def get_synced_files():
 
 @app.get("/history")
 async def get_history(user_id: str, session_id: str):
+    """Get chat history for a specific session."""
     history = get_chat_history(user_id, session_id)
-    # Correct key name for openai history items is 'assistant', not 'ai'
     return {"history": history}
+
+@app.get("/sessions")
+async def get_sessions(user_id: str):
+    """Get list of previous session IDs for a user."""
+    sessions = get_all_sessions(user_id)
+    return {"sessions": sessions}
 
 if __name__ == "__main__":
     import uvicorn

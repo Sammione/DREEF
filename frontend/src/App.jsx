@@ -14,7 +14,8 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState('session-' + Math.random().toString(36).substr(2, 9));
-  const [chatHistory, setChatHistory] = useState([]);
+  const [chatHistory, setChatHistory] = useState([]); // This will be the list of previous sessions
+  const [kbFiles, setKbFiles] = useState([]); // This will be the list of files in the KB
   const [showSettings, setShowSettings] = useState(false);
   
   const messagesEndRef = useRef(null);
@@ -26,18 +27,45 @@ function App() {
   }, [messages, input]);
 
   useEffect(() => {
-    const fetchHistory = async () => {
+    const fetchMetadata = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/files`);
-        if (response.data.files) {
-          setChatHistory(response.data.files);
+        // 1. Fetch KB Files
+        const filesResp = await axios.get(`${API_BASE_URL}/files`);
+        if (filesResp.data.files) {
+          setKbFiles(filesResp.data.files);
+        }
+        
+        // 2. Fetch Chat Sessions
+        const sessionsResp = await axios.get(`${API_BASE_URL}/sessions?user_id=user1`);
+        if (sessionsResp.data.sessions) {
+          setChatHistory(sessionsResp.data.sessions);
         }
       } catch (error) {
-        console.error("Error fetching history:", error);
+        console.error("Error fetching metadata:", error);
       }
     };
-    fetchHistory();
-  }, []);
+    fetchMetadata();
+  }, [messages]); // Refresh metadata when messages change (new chat starts)
+
+  const loadSession = async (sid) => {
+    setSessionId(sid);
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/history?user_id=user1&session_id=${sid}`);
+      if (response.data.history) {
+        // Map backend history roles back to local ones
+        const mapped = response.data.history.map(m => ({
+          role: m.role === 'assistant' ? 'ai' : 'user',
+          content: m.content
+        }));
+        setMessages(mapped);
+      }
+    } catch (error) {
+      console.error("Error loading session:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -113,10 +141,21 @@ function App() {
         </button>
 
         <div className="history-section">
-          {chatHistory.length > 0 && chatHistory.slice(0, 15).map((chat, i) => (
-            <div key={i} className="history-item" onClick={() => handleSend(`Tell me about ${chat.name}`)}>
+          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '1rem 0 0.5rem 0.5rem', fontWeight: 600 }}>Recent Chats</div>
+          {chatHistory.length > 0 ? chatHistory.slice(0, 10).map((sid, i) => (
+            <div key={i} className={`history-item ${sid === sessionId ? 'active' : ''}`} onClick={() => loadSession(sid)}>
               <MessageSquare size={14} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
-              {chat.name}
+              {sid.substring(0, 15)}...
+            </div>
+          )) : (
+            <div style={{ padding: '0.5rem', fontSize: '0.8rem', opacity: 0.5 }}>No recent chats.</div>
+          )}
+
+          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '1.5rem 0 0.5rem 0.5rem', fontWeight: 600 }}>Knowledge Base</div>
+          {kbFiles.length > 0 && kbFiles.slice(0, 10).map((file, i) => (
+            <div key={i} className="history-item" onClick={() => handleSend(`Tell me about ${file.name}`)}>
+              <Sparkles size={12} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
+              {file.name}
             </div>
           ))}
         </div>
