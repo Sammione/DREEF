@@ -8,19 +8,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def get_db_connection():
-    # TEMPORARILY DISABLED SQL PERSISTENCE TO AVOID 30s TIMEOUTS
-    return None
-    
+    # RE-ENABLING FOR AZURE DEPLOYMENT (Ensures goal for memory and history is met)
     connection_string = os.getenv("DB_CONNECTION_STRING")
     if not pyodbc:
-        print("pyodbc is not installed/available.")
+        print("pyodbc is not installed/available. Persistent memory will be disabled.")
+        return None
+    
+    if not connection_string:
+        print("DB_CONNECTION_STRING not set. Persistent memory will be disabled.")
         return None
         
     try:
-        conn = pyodbc.connect(connection_string)
+        # Added a 5-second timeout to avoid long hangs
+        conn = pyodbc.connect(connection_string, timeout=5)
         return conn
     except Exception as e:
-        print(f"Error connecting to database: {e}")
+        print(f"Error connecting to database (History won't be stored): {e}")
         return None
 
 def store_chat_history(user_id, session_id, role, content):
@@ -70,3 +73,24 @@ def get_chat_history(user_id, session_id, limit=10):
         return []
     finally:
         conn.close()
+
+
+def get_all_sessions(user_id):
+    conn = get_db_connection()
+    if not conn:
+        return []
+    try:
+        cursor = conn.cursor()
+        # Use a CTE or just select distinct
+        cursor.execute(
+            'SELECT DISTINCT SessionId FROM ChatHistory WHERE UserId = ?',
+            (user_id)
+        )
+        rows = cursor.fetchall()
+        return [row[0] for row in rows]
+    except Exception as e:
+        print(f'Error getting sessions: {e}')
+        return []
+    finally:
+        if conn:
+            conn.close()
