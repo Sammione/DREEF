@@ -8,7 +8,9 @@ load_dotenv()
 
 # Setup ChromaDB for local vector storage
 # This will act as our "Knowledge Base"
-client = chromadb.PersistentClient(path="./chroma_db")
+# Use absolute path to avoid working directory issues on Azure
+db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chroma_db")
+client = chromadb.PersistentClient(path=db_path)
 collection = client.get_or_create_collection(
     name="drfeer_kb",
     embedding_function=embedding_functions.OpenAIEmbeddingFunction(

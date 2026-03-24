@@ -1,5 +1,8 @@
 import os
-import pyodbc
+try:
+    import pyodbc
+except ImportError:
+    pyodbc = None
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -9,6 +12,10 @@ def get_db_connection():
     return None
     
     connection_string = os.getenv("DB_CONNECTION_STRING")
+    if not pyodbc:
+        print("pyodbc is not installed/available.")
+        return None
+        
     try:
         conn = pyodbc.connect(connection_string)
         return conn
