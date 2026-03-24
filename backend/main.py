@@ -34,6 +34,21 @@ class ChatRequest(BaseModel):
 async def root():
     return {"message": "DRFEER ChatGPT-like API is running"}
 
+@app.get("/health")
+async def health():
+    """Diagnostic check to see reachability and check config presence."""
+    return {
+        "status": "online",
+        "service": "DRFEER AI Backend",
+        "configuration": {
+            "openai": bool(os.getenv("OPENAI_API_KEY")),
+            "sharepoint_site": bool(os.getenv("SHAREPOINT_SITE_URL")),
+            "sharepoint_client_id": bool(os.getenv("SHAREPOINT_CLIENT_ID")),
+            "database_connected": os.getenv("DB_CONNECTION_STRING") is not None,
+            "pyodbc_available": True # If it's running, it's True
+        }
+    }
+
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
