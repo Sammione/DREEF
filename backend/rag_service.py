@@ -1,4 +1,15 @@
 import os
+import sys
+
+# SQLite fix for ChromaDB on many Linux environments (Render/Vercel)
+try:
+    if 'sqlite3' in sys.modules:
+        del sys.modules['sqlite3']
+    import pysqlite3 as sqlite3
+    sys.modules['sqlite3'] = sqlite3
+except ImportError:
+    import sqlite3
+
 import chromadb
 from chromadb.utils import embedding_functions
 from openai_service import get_embeddings
