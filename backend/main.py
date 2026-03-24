@@ -1,4 +1,18 @@
+import sys
 import os
+
+# --- CRITICAL: MUST BE AT THE VERY TOP TO PATCH SQLITE FOR CHROMADB ---
+try:
+    import pysqlite3 as sqlite3
+    sys.modules['sqlite3'] = sqlite3
+    print("SQLite successfully patched with pysqlite3-binary.")
+except ImportError:
+    try:
+        import sqlite3
+        print("Using standard sqlite3.")
+    except Exception as e:
+        print(f"Warning: Could not load sqlite3 or pysqlite3: {e}")
+
 from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -52,11 +66,19 @@ async def health():
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
+        print(f">>> CALLING /CHAT | User: {request.user_id} | Session: {request.session_id}")
+        
         # 1. Fetch history from DB (Memory)
+        print("Fetching history...")
         history = get_chat_history(request.user_id, request.session_id)
         
         # 2. RAG Logic (Search Knowledge Base)
-        knowledge_context = search_kb(request.message)
+        print("Searching knowledge base (Chromadb)...")
+        try:
+            knowledge_context = search_kb(request.message)
+        except Exception as e:
+            print(f"KB Search Failed: {e}")
+            knowledge_context = "Error retrieving from knowledge base."
         
         if not knowledge_context:
             knowledge_context = "No specific documents found in the Knowledge Base for this query."
@@ -80,15 +102,20 @@ async def chat(request: ChatRequest):
         openai_messages = [system_msg] + history + [{"role": "user", "content": request.message}]
         
         # 4. Generate response
+        print("Calling OpenAI Chat Completion...")
         ai_response_text = generate_chat_response(openai_messages)
         
         # 5. Store in persistent history (Memory)
+        print("Storing results...")
         store_chat_history(request.user_id, request.session_id, "user", request.message)
         store_chat_history(request.user_id, request.session_id, "assistant", ai_response_text)
         
+        print("<<< /CHAT SUCCESS")
         return {"response": ai_response_text}
     except Exception as e:
-        print(f"Error in chat endpoint: {e}")
+        print(f"!!! Error in chat endpoint: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/ingest")
