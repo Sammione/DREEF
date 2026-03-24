@@ -30,6 +30,20 @@ load_dotenv()
 
 app = FastAPI(title="DRFEER ChatGPT-like API")
 
+# Global history of logs for diagnostics (accessible via /logs)
+GLOBAL_LOGS = []
+
+def log_event(message):
+    import datetime
+    timestamp = datetime.datetime.now().strftime("%H:%M:%S")
+    entry = f"[{timestamp}] {message}"
+    print(entry)
+    GLOBAL_LOGS.append(entry)
+    if len(GLOBAL_LOGS) > 100:
+        GLOBAL_LOGS.pop(0)
+
+log_event("Application Startup initiated.")
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -51,39 +65,55 @@ async def root():
 @app.get("/health")
 async def health():
     """Diagnostic check to see reachability and check config presence."""
+    import psutil # Ensure this is in requirements!
+    process = psutil.Process(os.getpid())
+    mem_info = process.memory_info()
+    
     return {
         "status": "online",
         "service": "DRFEER AI Backend",
+        "memory": {
+            "rss_mb": round(mem_info.rss / (1024 * 1024), 2),
+            "vms_mb": round(mem_info.vms / (1024 * 1024), 2),
+        },
         "configuration": {
             "openai": bool(os.getenv("OPENAI_API_KEY")),
             "sharepoint_site": bool(os.getenv("SHAREPOINT_SITE_URL")),
             "sharepoint_client_id": bool(os.getenv("SHAREPOINT_CLIENT_ID")),
             "database_connected": os.getenv("DB_CONNECTION_STRING") is not None,
-            "pyodbc_available": True # If it's running, it's True
+            "pyodbc_available": True 
         }
     }
+
+@app.get("/logs")
+async def get_logs():
+    """Access runtime diagnostic logs."""
+    return {"logs": GLOBAL_LOGS}
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
     try:
-        print(f">>> CALLING /CHAT | User: {request.user_id} | Session: {request.session_id}")
+        log_event(f">>> Processing /CHAT | User: {request.user_id} | Msg: {request.message[:50]}...")
         
         # 1. Fetch history from DB (Memory)
-        print("Fetching history...")
+        log_event("Fetching history...")
         history = get_chat_history(request.user_id, request.session_id)
         
         # 2. RAG Logic (Search Knowledge Base)
-        print("Searching knowledge base (Chromadb)...")
+        log_event("Searching knowledge base (Chromadb)...")
         try:
             knowledge_context = search_kb(request.message)
+            log_event(f"KB Search Complete. Context size: {len(knowledge_context)} chars.")
         except Exception as e:
-            print(f"KB Search Failed: {e}")
+            log_event(f"ERROR in KB Search: {e}")
             knowledge_context = "Error retrieving from knowledge base."
         
-        if not knowledge_context:
+        if not knowledge_context or "No specific documents found" in knowledge_context:
+            log_event("No relevant KB documents found.")
             knowledge_context = "No specific documents found in the Knowledge Base for this query."
         
-        # 3. Prepare strict system prompt
+        # 3. Prepare OpenAI prompt
+        log_event("Calling OpenAI Chat Completion...")
         system_msg = {
             "role": "system", 
             "content": (
@@ -97,23 +127,21 @@ async def chat(request: ChatRequest):
                 f"CONTEXT FROM KNOWLEDGE BASE:\n{knowledge_context}"
             )
         }
-        
-        # Prepare OpenAI history format
         openai_messages = [system_msg] + history + [{"role": "user", "content": request.message}]
         
         # 4. Generate response
-        print("Calling OpenAI Chat Completion...")
         ai_response_text = generate_chat_response(openai_messages)
+        log_event("OpenAI generation successful.")
         
-        # 5. Store in persistent history (Memory)
-        print("Storing results...")
+        # 5. Store history
+        log_event("Storing chat history...")
         store_chat_history(request.user_id, request.session_id, "user", request.message)
         store_chat_history(request.user_id, request.session_id, "assistant", ai_response_text)
         
-        print("<<< /CHAT SUCCESS")
+        log_event("<<< /CHAT SUCCESSFUL")
         return {"response": ai_response_text}
     except Exception as e:
-        print(f"!!! Error in chat endpoint: {e}")
+        log_event(f"!!! CRITICAL FAIL in /chat: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
