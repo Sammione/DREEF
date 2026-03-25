@@ -21,3 +21,6 @@ dist-ssr/
 # OS
 .DS_Store
 Thumbs.db
+
+# Frontend managed in separate repo
+frontend/
