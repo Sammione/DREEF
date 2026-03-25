@@ -9,29 +9,18 @@ try:
 except ImportError:
     pass
 
-# Ensure backend directory is in sys.path
+# Root directory setup
 root_path = os.path.dirname(os.path.abspath(__file__))
-backend_path = os.path.join(root_path, 'backend')
-if backend_path not in sys.path:
-    sys.path.append(backend_path)
+if root_path not in sys.path:
+    sys.path.append(root_path)
 
 try:
-    # Explicitly import from backend.main
+    # Now that the backend is in the root, we import directly
     from main import app
-    print("Backend application loaded successfully!")
-except ImportError:
-    # Try alternate import path
-    try:
-        from backend.main import app
-    except Exception as e:
-        print(f"FAILED TO LOAD BACKEND APP: {e}")
-        from fastapi import FastAPI
-        app = FastAPI(title="DRFEER - Error Fallback")
-        @app.get("/")
-        async def root(): return {"status": "error", "message": str(e)}
+    print("Backend application loaded successfully from root!")
 except Exception as e:
     print(f"FAILED TO LOAD BACKEND APP: {e}")
     from fastapi import FastAPI
     app = FastAPI(title="DRFEER - Error Fallback")
     @app.get("/")
-    async def root(): return {"status": "error", "message": str(e)}
+    async def root(): return {"status": "error", "message": f"Initialization failed: {str(e)}"}
