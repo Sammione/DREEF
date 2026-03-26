@@ -1,5 +1,14 @@
-# Environments
+# Environments — never commit these
 .env
+.env.development
+.env.production
+.env.staging
+.env.*.local
+secrets.json
+
+# Runtime logs
+*.log
+backend_log.txt
 
 # Python
 __pycache__/

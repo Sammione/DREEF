@@ -1,0 +1,137 @@
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - DREEF-BACKEND-AI/**
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+  paths:
+    include:
+      - DREEF-BACKEND-AI/**
+
+variables:
+  dockerRegistryServiceConnection: "acr-service-connection"
+  azureServiceConnection: "azure-service-connection"
+  imageRepositoryTest: "dreefaitestimg"
+  imageRepositoryProd: "dreefaiprodimg"
+  containerRegistry: "dreefacrprod.azurecr.io"
+  containerAppNameTest: "cadreefaibackendtest"
+  containerAppNameProd: "cadreefaibackendprod"
+  resourceGroupTest: "DREEF-backend-resource"
+  resourceGroupProd: "DREEF-backend-resource"
+
+stages:
+  - stage: Build
+    displayName: Build and Push Docker Image
+    jobs:
+      - job: BuildImage
+        displayName: Build Docker Image
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - task: Docker@2
+            displayName: Log in to ACR
+            inputs:
+              command: login
+              containerRegistry: $(dockerRegistryServiceConnection)
+
+          - script: |
+              docker build \
+                --no-cache \
+                -t $(containerRegistry)/$(imageRepositoryTest):$(Build.BuildId) \
+                -t $(containerRegistry)/$(imageRepositoryTest):latest \
+                -t $(containerRegistry)/$(imageRepositoryProd):$(Build.BuildId) \
+                -t $(containerRegistry)/$(imageRepositoryProd):latest \
+                -f "DREEF-BACKEND-AI/Dockerfile" \
+                "DREEF-BACKEND-AI/"
+            displayName: Build Docker Image
+            workingDirectory: $(Build.Repository.LocalPath)
+
+          - script: |
+              docker push $(containerRegistry)/$(imageRepositoryTest):$(Build.BuildId)
+              docker push $(containerRegistry)/$(imageRepositoryTest):latest
+              docker push $(containerRegistry)/$(imageRepositoryProd):$(Build.BuildId)
+              docker push $(containerRegistry)/$(imageRepositoryProd):latest
+            displayName: Push Docker Image
+            condition: ne(variables['Build.Reason'], 'PullRequest')
+
+          - task: Docker@2
+            displayName: Log out of ACR
+            inputs:
+              command: logout
+              containerRegistry: $(dockerRegistryServiceConnection)
+
+  - stage: DeployTest
+    displayName: Deploy to Test Environment
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'develop'))
+    jobs:
+      - job: DeployTestApp
+        displayName: Deploy to Test Container App
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - task: AzureCLI@2
+            displayName: Update Container App (Test)
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az containerapp update \
+                  --name $(containerAppNameTest) \
+                  --resource-group $(resourceGroupTest) \
+                  --image $(containerRegistry)/$(imageRepositoryTest):$(Build.BuildId) \
+                  --set-env-vars "ENVIRONMENT=Development" \
+                                "PORT=8400" \
+                                "PYTHONUNBUFFERED=1" \
+                                "Logging__LogLevel__Default=Information" \
+                                "OPENAI_API_KEY=secretref:openai-api-key" \
+                                "DB_CONNECTION_STRING=secretref:db-connection" \
+                                "SHAREPOINT_SITE_URL=secretref:sharepoint-site-url" \
+                                "SHAREPOINT_CLIENT_ID=secretref:sharepoint-client-id" \
+                                "SHAREPOINT_CLIENT_SECRET=secretref:sharepoint-client-secret" \
+                                "AZURE_TENANT_ID=secretref:azure-tenant-id" \
+                                "SHAREPOINT_DOC_LIB=Shared Documents"
+
+  - stage: DeployProd
+    displayName: Deploy to Production Environment
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranchName'], 'main'))
+    jobs:
+      - job: DeployProdApp
+        displayName: Deploy to Prod Container App
+        pool:
+          vmImage: "ubuntu-latest"
+        steps:
+          - task: AzureCLI@2
+            displayName: Update Container App (Prod)
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az containerapp update \
+                  --name $(containerAppNameProd) \
+                  --resource-group $(resourceGroupProd) \
+                  --image $(containerRegistry)/$(imageRepositoryProd):$(Build.BuildId) \
+                  --min-replicas 1 \
+                  --max-replicas 3 \
+                  --set-env-vars "ENVIRONMENT=Production" \
+                                "PORT=8400" \
+                                "PYTHONUNBUFFERED=1" \
+                                "Logging__LogLevel__Default=Information" \
+                                "OPENAI_API_KEY=secretref:openai-api-key" \
+                                "DB_CONNECTION_STRING=secretref:db-connection" \
+                                "SHAREPOINT_SITE_URL=secretref:sharepoint-site-url" \
+                                "SHAREPOINT_CLIENT_ID=secretref:sharepoint-client-id" \
+                                "SHAREPOINT_CLIENT_SECRET=secretref:sharepoint-client-secret" \
+                                "AZURE_TENANT_ID=secretref:azure-tenant-id" \
+                                "SHAREPOINT_DOC_LIB=Shared Documents"
