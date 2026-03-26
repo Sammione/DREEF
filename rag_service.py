@@ -38,7 +38,6 @@ def add_document_to_kb(doc_id, text, metadata=None):
             documents=[text],
             metadatas=[metadata] if metadata else None
         )
-        
         return True
     except Exception as e:
         print(f"Error adding to KB: {e}")

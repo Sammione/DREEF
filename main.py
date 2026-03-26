@@ -1,6 +1,7 @@
 import sys
 import os
 
+# v1.0.1
 # --- CRITICAL: MUST BE AT THE VERY TOP TO PATCH SQLITE FOR CHROMADB ---
 try:
     import pysqlite3 as sqlite3
