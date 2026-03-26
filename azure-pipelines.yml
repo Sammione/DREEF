@@ -5,7 +5,9 @@ trigger:
       - develop
   paths:
     include:
-      - DREEF-BACKEND-AI/**
+      - src/**
+      - Dockerfile
+      - azure-pipelines.yml
 
 pr:
   branches:
@@ -14,7 +16,9 @@ pr:
       - develop
   paths:
     include:
-      - DREEF-BACKEND-AI/**
+      - src/**
+      - Dockerfile
+      - azure-pipelines.yml
 
 variables:
   dockerRegistryServiceConnection: "acr-service-connection"
@@ -49,8 +53,8 @@ stages:
                 -t $(containerRegistry)/$(imageRepositoryTest):latest \
                 -t $(containerRegistry)/$(imageRepositoryProd):$(Build.BuildId) \
                 -t $(containerRegistry)/$(imageRepositoryProd):latest \
-                -f "DREEF-BACKEND-AI/Dockerfile" \
-                "DREEF-BACKEND-AI/"
+                -f Dockerfile \
+                .
             displayName: Build Docker Image
             workingDirectory: $(Build.Repository.LocalPath)
 
