@@ -1,5 +1,6 @@
 # Environments
 .env
+.env.local
 
 # Python
 __pycache__/
@@ -22,5 +23,6 @@ dist-ssr/
 .DS_Store
 Thumbs.db
 
-# Frontend managed in separate repo
-frontend/
+# Frontend
+# frontend/ is now enabled for tracking to allow Vercel/Azure unified pipeline
+# (previously ignored)
