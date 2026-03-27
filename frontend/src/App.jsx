@@ -7,7 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'markdown-to-jsx';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://cadreefaibackendprod.livelyglacier-27f4b9fc.southafricanorth.azurecontainerapps.io';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://drback.onrender.com';
 
 function App() {
   const [input, setInput] = useState('');
