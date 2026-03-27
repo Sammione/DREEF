@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: drfeer-ai-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: OPENAI_API_KEY
+        sync: false # Set this in the Render dashboard manually for security
+      - key: SHAREPOINT_SITE_URL
+        sync: false
+      - key: SHAREPOINT_CLIENT_ID
+        sync: false
+      - key: SHAREPOINT_CLIENT_SECRET
+        sync: false
+      - key: DB_CONNECTION_STRING
+        sync: false
