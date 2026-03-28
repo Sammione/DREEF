@@ -154,7 +154,7 @@ async def ingest_sharepoint_docs():
     """
     try:
         print("Starting SharePoint ingestion...")
-        files = list_files_in_document_library()
+        files = list_files_in_document_library(os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents"))
         if not files:
             print("No files found in SharePoint or connection failed.")
             return {"message": "No files found in SharePoint or connection failed."}
