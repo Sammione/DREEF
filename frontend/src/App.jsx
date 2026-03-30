@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { 
   Send, Plus, MessageSquare, Copy, RotateCcw, 
-  Settings, LogOut, Bot, User as UserIcon, Sparkles, Terminal
+  Settings, LogOut, Bot, User as UserIcon, Sparkles, Terminal, Menu, X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Markdown from 'markdown-to-jsx';
@@ -59,12 +59,15 @@ function App() {
           role: m.role === 'assistant' ? 'ai' : 'user',
           content: m.content
         }));
-        setMessages(mapped);
       }
     } catch (error) {
       console.error("Error loading session:", error);
     } finally {
       setIsLoading(false);
+      // Auto-close sidebar on mobile
+      if (window.innerWidth <= 768) {
+        setIsSidebarOpen(false);
+      }
     }
   };
 
@@ -151,6 +154,9 @@ function App() {
       <aside className={`sidebar ${!isSidebarOpen ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
            <span className="brand">DREEF AI</span>
+           <button className="mobile-close-btn" onClick={toggleSidebar}>
+              <X size={18} />
+           </button>
         </div>
 
         <button className="new-chat-btn" onClick={handleNewChat} title="New Intelligence Session">
@@ -198,7 +204,7 @@ function App() {
         <header className="main-header">
           <div className="flex items-center gap-3">
              <button className="mobile-menu-btn" onClick={toggleSidebar}>
-                <MessageSquare size={20} />
+                <Menu size={20} />
              </button>
             <span className="font-semibold text-sm">DREEF CHAT AI</span>
           </div>

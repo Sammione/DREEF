@@ -364,6 +364,15 @@ body {
   color: var(--accent);
 }
 
+.mobile-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+}
+
 /* Sidebar Overlay */
 .sidebar-overlay {
   position: fixed;
@@ -431,5 +440,9 @@ body {
 
   .main-header {
     padding: 0 1rem;
+  }
+
+  .mobile-close-btn {
+    display: flex;
   }
 }
