@@ -82,10 +82,11 @@ def list_all_files_recursively(site_id, drive_id, folder_id='root', token=None):
 def list_files_in_document_library(doc_lib_name="Documents"):
     """
     Resolve the drive and list all files recursively.
+    Returns: (files, drive_id, token)
     """
     token = get_graph_token()
     if not token:
-        return []
+        return [], None, None
     
     try:
         # 1. Resolve Site ID first
@@ -114,44 +115,43 @@ def list_files_in_document_library(doc_lib_name="Documents"):
             
         if not target_drive:
             print(f"No document library found matching '{doc_lib_name}'")
-            return []
+            return [], None, token
             
         drive_id = target_drive['id']
         print(f"Using Drive: {target_drive['name']} ({drive_id})")
         
         # 3. List all files recursively
-        return list_all_files_recursively(site_id, drive_id, 'root', token)
+        files = list_all_files_recursively(site_id, drive_id, 'root', token)
+        return files, drive_id, token
     except Exception as e:
         print(f"Error in list_files_in_document_library: {e}")
-        return []
+        return [], None, token
 
-def download_file_content(file_id):
+def download_file_content(file_id, drive_id=None, token=None):
     """
     Download file content using file ID via Microsoft Graph API.
+    If drive_id and token are provided, it skips redundant resolution.
     """
-    token = get_graph_token()
+    if not token:
+        token = get_graph_token()
     if not token:
         return None
     
+    headers = {"Authorization": f"Bearer {token}"}
+    
     try:
-        # No need for site_id for a known drive item ID
-        url = f"https://graph.microsoft.com/v1.0/drives/{os.getenv('MS_DRIVE_ID', '')}/items/{file_id}/content"
-        # Actually, let's keep it simple: if we don't have drive_id from context, assume we might need to find it
-        # But for ingestion, we usually just have the item ID which works across /shares/ or /drives/id/items/id
-        # Simplest way is /v1.0/drives/{drive-id}/items/{item-id}/content
-        # Let's use a cached search to find the drive if possible or just use a generic drive item endpoint
-        # v1.0/drive/items/{id}/content works if it's the personal drive, but for sites we need /drives/{drive-id}/items/{item-id}/content
-        
-        # Resolving site/drive again (for robustness)
-        from urllib.parse import urlparse
-        parsed = urlparse(SHAREPOINT_SITE_URL)
-        site_url = f"https://graph.microsoft.com/v1.0/sites/{parsed.netloc}:{parsed.path.rstrip('/')}"
-        headers = {"Authorization": f"Bearer {token}"}
-        site_id = requests.get(site_url, headers=headers).json()['id']
-        drive_id = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_id}/drive", headers=headers).json()['id']
+        # If drive_id is not provided, we have to resolve it (slow but fallback)
+        if not drive_id:
+            from urllib.parse import urlparse
+            parsed = urlparse(SHAREPOINT_SITE_URL)
+            site_url = f"https://graph.microsoft.com/v1.0/sites/{parsed.netloc}:{parsed.path.rstrip('/')}"
+            site_resp = requests.get(site_url, headers=headers, timeout=10)
+            site_id = site_resp.json()['id']
+            drive_resp = requests.get(f"https://graph.microsoft.com/v1.0/sites/{site_id}/drive", headers=headers, timeout=10)
+            drive_id = drive_resp.json()['id']
         
         download_url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{file_id}/content"
-        resp = requests.get(download_url, headers=headers)
+        resp = requests.get(download_url, headers=headers, timeout=30)
         resp.raise_for_status()
         return resp.content
     except Exception as e:

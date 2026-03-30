@@ -13,7 +13,7 @@ except ImportError:
     except Exception as e:
         print(f"Warning: Could not load sqlite3 or pysqlite3: {e}")
 
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -26,8 +26,7 @@ from sharepoint_service import list_files_in_document_library, download_file_con
 
 load_dotenv()
 
-# Starting API without mock data
-
+# Starting API
 app = FastAPI(title="DRFEER ChatGPT-like API")
 
 # Global history of logs for diagnostics (accessible via /logs)
@@ -42,12 +41,19 @@ def log_event(message):
     if len(GLOBAL_LOGS) > 100:
         GLOBAL_LOGS.pop(0)
 
-log_event("Application Startup initiated.")
+@app.on_event("startup")
+async def startup_event():
+    log_event("Application Startup initiated.")
+    try:
+        initialize_mock_kb()
+        log_event("Mock Knowledge Base ensured/initialized.")
+    except Exception as e:
+        log_event(f"Error initializing mock KB: {e}")
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this to your frontend domain
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -66,16 +72,20 @@ async def root():
 async def health():
     """Diagnostic check to see reachability and check config presence."""
     import psutil # Ensure this is in requirements!
-    process = psutil.Process(os.getpid())
-    mem_info = process.memory_info()
+    try:
+        process = psutil.Process(os.getpid())
+        mem_info = process.memory_info()
+        mem_stats = {
+            "rss_mb": round(mem_info.rss / (1024 * 1024), 2),
+            "vms_mb": round(mem_info.vms / (1024 * 1024), 2),
+        }
+    except:
+        mem_stats = "unavailable"
     
     return {
         "status": "online",
         "service": "DRFEER AI Backend",
-        "memory": {
-            "rss_mb": round(mem_info.rss / (1024 * 1024), 2),
-            "vms_mb": round(mem_info.vms / (1024 * 1024), 2),
-        },
+        "memory": mem_stats,
         "configuration": {
             "openai": bool(os.getenv("OPENAI_API_KEY")),
             "sharepoint_site": bool(os.getenv("SHAREPOINT_SITE_URL")),
@@ -146,51 +156,36 @@ async def chat(request: ChatRequest):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/ingest")
-async def ingest_sharepoint_docs():
-    """
-    Trigger ingestion of documents from the configured SharePoint library.
-    Also saves a physical copy to the 'synced_documents' folder.
-    """
+def run_ingestion():
+    """Background task for ingestion."""
     try:
-        print("Starting SharePoint ingestion...")
-<<<<<<< HEAD
-        files = list_files_in_document_library(os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents"))
-=======
-        files = list_files_in_document_library()
->>>>>>> cdb2227645a3a9a843312f0778a021835b42304c
+        log_event("Starting SharePoint background ingestion...")
+        doc_lib = os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents")
+        files, drive_id, token = list_files_in_document_library(doc_lib)
+        
         if not files:
-            print("No files found in SharePoint or connection failed.")
-            return {"message": "No files found in SharePoint or connection failed."}
-        
-        print(f"Found {len(files)} files to process.")
-        
-        # Create a local folder for synced files
+            log_event("No files found or connection failed during background sync.")
+            return
+
+        log_event(f"Found {len(files)} files. Starting processing...")
         sync_dir = os.path.join(os.path.dirname(__file__), "synced_documents")
         if not os.path.exists(sync_dir):
             os.makedirs(sync_dir)
-            
+
         ingested_count = 0
         for file_info in files:
             file_name = file_info["name"]
-            print(f"Processing: {file_name}")
+            log_event(f"BG Processing: {file_name}")
             
-            # 1. Download Content
-            content = download_file_content(file_info["server_relative_url"])
+            content = download_file_content(file_info["server_relative_url"], drive_id, token)
             if content:
-                # 2. Save physical copy locally
                 file_path = os.path.join(sync_dir, file_name)
-                # Ensure parent dirs exist
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 with open(file_path, "wb") as f:
                     f.write(content)
                 
-                # 3. Process for Knowledge Base
                 if any(file_name.lower().endswith(ext) for ext in ['.txt', '.md', '.pdf', '.docx']):
-                    print(f"Extracting & chunking: {file_name}")
                     chunks = extract_text_from_binary(content, file_name)
-                    print(f"Generated {len(chunks)} chunks.")
-                    
                     for i, chunk in enumerate(chunks):
                         chunk_id = f"sp_{file_name.replace(' ', '_')}_v{i}"
                         metadata = {
@@ -202,16 +197,15 @@ async def ingest_sharepoint_docs():
                         add_document_to_kb(chunk_id, chunk, metadata)
                 
                 ingested_count += 1
-                print(f"Successfully processed: {file_name}")
-        
-        return {
-            "message": f"Ingestion complete. {ingested_count} files synced and saved locally.",
-            "storage_path": sync_dir,
-            "total_files_found": len(files)
-        }
+        log_event(f"Background ingestion complete. {ingested_count} files processed.")
     except Exception as e:
-        print(f"Error during ingestion: {e}")
-        raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
+        log_event(f"Error in background ingestion: {e}")
+
+@app.post("/ingest")
+async def ingest_sharepoint_docs(background_tasks: BackgroundTasks):
+    """Trigger background ingestion."""
+    background_tasks.add_task(run_ingestion)
+    return {"message": "Ingestion started in the background. Please check /logs for progress."}
 
 @app.get("/files")
 async def get_synced_files():
