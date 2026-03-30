@@ -17,6 +17,7 @@ function App() {
   const [chatHistory, setChatHistory] = useState([]); // This will be the list of previous sessions
   const [kbFiles, setKbFiles] = useState([]); // This will be the list of files in the KB
   const [showSettings, setShowSettings] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
@@ -127,10 +128,27 @@ function App() {
     setShowSettings(!showSettings);
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
+
   return (
     <div className="chat-app">
+      {/* Sidebar Overlay for Mobile */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="sidebar-overlay"
+            onClick={toggleSidebar}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${!isSidebarOpen ? 'collapsed' : ''}`}>
         <div className="sidebar-header">
            <span className="brand">DREEF AI</span>
         </div>
@@ -179,6 +197,9 @@ function App() {
       <main className="main-content">
         <header className="main-header">
           <div className="flex items-center gap-3">
+             <button className="mobile-menu-btn" onClick={toggleSidebar}>
+                <MessageSquare size={20} />
+             </button>
             <span className="font-semibold text-sm">DREEF CHAT AI</span>
           </div>
           <div className="flex gap-4">
