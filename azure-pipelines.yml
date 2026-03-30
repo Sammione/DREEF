@@ -5,7 +5,8 @@ trigger:
       - develop
   paths:
     include:
-      - src/**
+      - "*.py"
+      - "*.txt"
       - Dockerfile
       - azure-pipelines.yml
 
@@ -16,7 +17,8 @@ pr:
       - develop
   paths:
     include:
-      - src/**
+      - "*.py"
+      - "*.txt"
       - Dockerfile
       - azure-pipelines.yml
 
