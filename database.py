@@ -81,15 +81,23 @@ def get_all_sessions(user_id):
         return []
     try:
         cursor = conn.cursor()
-        # Use a CTE or just select distinct
-        cursor.execute(
-            'SELECT DISTINCT SessionId FROM ChatHistory WHERE UserId = ?',
-            (user_id)
-        )
+        # SQL to get distinct sessions with their most recent timestamp and first user message
+        # This is for SQL Server (T-SQL) as suggested by IF NOT EXISTS (SELECT * FROM sysobjects...)
+        query = """
+            SELECT SessionId, 
+                   (SELECT TOP 1 Content FROM ChatHistory WHERE SessionId = c.SessionId AND Role = 'user' ORDER BY Timestamp ASC) as Title,
+                   MAX(Timestamp) as LastActive
+            FROM ChatHistory c
+            WHERE UserId = ?
+            GROUP BY SessionId
+            ORDER BY LastActive DESC
+        """
+        cursor.execute(query, (user_id,))
         rows = cursor.fetchall()
-        return [row[0] for row in rows]
+        # Return as list of dicts: {"id": "...", "title": "..."}
+        return [{"id": row[0], "title": row[1] or "New Chat"} for row in rows]
     except Exception as e:
-        print(f'Error getting sessions: {e}')
+        print(f"Error getting sessions: {e}")
         return []
     finally:
         if conn:

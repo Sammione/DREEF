@@ -142,22 +142,23 @@ function App() {
 
         <div className="history-section">
           <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '1rem 0 0.5rem 0.5rem', fontWeight: 600 }}>Recent Chats</div>
-          {chatHistory.length > 0 ? chatHistory.slice(0, 10).map((sid, i) => (
-            <div key={i} className={`history-item ${sid === sessionId ? 'active' : ''}`} onClick={() => loadSession(sid)}>
+          {chatHistory.length > 0 ? chatHistory.slice(0, 10).map((session, i) => (
+            <div key={i} className={`history-item ${(session.id || session) === sessionId ? 'active' : ''}`} onClick={() => loadSession(session.id || session)}>
               <MessageSquare size={14} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
-              {sid.substring(0, 15)}...
+              {session.title || (typeof session === 'string' ? session.substring(0, 15) : 'Unknown Session')}...
             </div>
           )) : (
             <div style={{ padding: '0.5rem', fontSize: '0.8rem', opacity: 0.5 }}>No recent chats.</div>
           )}
 
-          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '1.5rem 0 0.5rem 0.5rem', fontWeight: 600 }}>Knowledge Base</div>
+          {/* Knowledge Base Hided as per user request */}
+          {/* <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '1.5rem 0 0.5rem 0.5rem', fontWeight: 600 }}>Knowledge Base</div>
           {kbFiles.length > 0 && kbFiles.slice(0, 10).map((file, i) => (
             <div key={i} className="history-item" onClick={() => handleSend(`Tell me about ${file.name}`)}>
               <Sparkles size={12} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
               {file.name}
             </div>
-          ))}
+          ))} */}
         </div>
 
         {/* Footer Area with Settings */}

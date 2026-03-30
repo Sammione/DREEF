@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 # Environments
 .env
 .env.local
-=======
-# Environments — never commit these
-.env
 .env.development
 .env.production
 .env.staging
@@ -14,7 +10,6 @@ secrets.json
 # Runtime logs
 *.log
 backend_log.txt
->>>>>>> cdb2227645a3a9a843312f0778a021835b42304c
 
 # Python
 __pycache__/
@@ -37,11 +32,5 @@ dist-ssr/
 .DS_Store
 Thumbs.db
 
-<<<<<<< HEAD
 # Frontend
-# frontend/ is now enabled for tracking to allow Vercel/Azure unified pipeline
-# (previously ignored)
-=======
-# Frontend managed in separate repo
-frontend/
->>>>>>> cdb2227645a3a9a843312f0778a021835b42304c
+# frontend/ is enabled for tracking
