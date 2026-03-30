@@ -158,8 +158,20 @@ async def chat(request: ChatRequest):
 
 def run_ingestion():
     """Background task for ingestion."""
+    from rag_service import collection
     try:
         log_event("Starting SharePoint background ingestion...")
+        
+        # CLEAR EXISTING DATA BEFORE SYNC
+        log_event("Clearing existing Knowledge Base documents for a clean sync...")
+        try:
+            results = collection.get()
+            if results['ids']:
+                collection.delete(ids=results['ids'])
+            log_event("Existing Knowledge Base cleared.")
+        except Exception as e:
+            log_event(f"Note: Could not clear KB (it might already be empty): {e}")
+
         doc_lib = os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents")
         files, drive_id, token = list_files_in_document_library(doc_lib)
         
@@ -205,7 +217,7 @@ def run_ingestion():
 async def ingest_sharepoint_docs(background_tasks: BackgroundTasks):
     """Trigger background ingestion."""
     background_tasks.add_task(run_ingestion)
-    return {"message": "Ingestion started in the background. Please check /logs for progress."}
+    return {"message": "Ingestion started in the background (Existing data cleared). Please check /logs for progress."}
 
 @app.get("/files")
 async def get_synced_files():
