@@ -231,11 +231,11 @@ async def get_synced_files():
         files = []
         seen = set()
         for meta in results.get('metadatas', []):
-            if meta and 'filename' in meta:
-                fname = meta['filename']
-                if fname not in seen:
-                    files.append({"name": fname, "source": meta.get('source', 'Unknown')})
-                    seen.add(fname)
+            if not meta: continue
+            fname = meta.get('filename') or meta.get('source')
+            if fname and fname not in seen:
+                files.append({"name": fname, "source": meta.get('source', 'SharePoint')})
+                seen.add(fname)
         return {"files": files}
     except Exception as e:
         print(f"Error fetching files: {e}")

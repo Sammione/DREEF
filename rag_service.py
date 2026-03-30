@@ -76,11 +76,11 @@ def initialize_mock_kb():
         add_document_to_kb(
             "doc1", 
             "DRFEER Company Policy: Employees are entitled to 25 days of annual leave. Working hours are from 9 AM to 5 PM.",
-            {"source": "HR_Policy.pdf"}
+            {"filename": "HR_Policy.pdf", "source": "Company Handbook"}
         )
         add_document_to_kb(
             "doc2", 
             "Project DRFEER: The goal is to build an AI platform that integrates SharePoint and SQL Databases for company-wide intelligence.",
-            {"source": "Project_Drfeer_Overview.docx"}
+            {"filename": "Project_Drfeer_Overview.docx", "source": "Internal Architecture"}
         )
         print("Mock Knowledge Base initialized with 2 documents.")
