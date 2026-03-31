@@ -51,8 +51,7 @@ body {
 }
 
 .sidebar.collapsed {
-  width: 0;
-  transform: translateX(-100%);
+  /* Only collapsed on mobile via media query below */
 }
 
 .sidebar-header {
@@ -404,7 +403,8 @@ body {
 
   .sidebar.collapsed {
     transform: translateX(-100%);
-    width: 280px; /* Keep width consistent but hide via transform */
+    width: 280px; 
+    box-shadow: none;
   }
 
   .messages-container {
