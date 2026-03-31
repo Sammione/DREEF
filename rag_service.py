@@ -75,16 +75,6 @@ def search_kb(query, n_results=5):
         return ""
 
 def initialize_mock_kb():
-    """Initializes a mock knowledge base if none exists."""
-    if collection.count() == 0:
-        add_document_to_kb(
-            "doc1", 
-            "DREEF Company Policy: Employees are entitled to 25 days of annual leave. Working hours are from 9 AM to 5 PM.",
-            {"filename": "HR_Policy.pdf", "source": "Company Handbook"}
-        )
-        add_document_to_kb(
-            "doc2", 
-            "Project DREEF: The goal is to build an AI platform that integrates SharePoint and SQL Databases for company-wide intelligence.",
-            {"filename": "Project_Drfeer_Overview.docx", "source": "Internal Architecture"}
-        )
-        print("Mock Knowledge Base initialized with 2 documents.")
+    """Knowledge base initialized empty (no mock data)."""
+    # Previously contained sample HR policies. Removed for production.
+    pass
