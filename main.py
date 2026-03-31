@@ -31,6 +31,8 @@ app = FastAPI(title="DREEF ChatGPT-like API")
 
 # Global history of logs for diagnostics (accessible via /logs)
 GLOBAL_LOGS = []
+INGESTION_STATUS = "Idle"
+LAST_INGESTION_ERROR = None
 
 def log_event(message):
     import datetime
@@ -98,7 +100,11 @@ async def health():
         "status": "online",
         "service": "DREEF AI Backend",
         "memory": mem_stats,
-        "sharepoint_diagnostic": sp_status,
+        "ingestion": {
+            "current_status": INGESTION_STATUS,
+            "last_error": LAST_INGESTION_ERROR,
+            "sharepoint_diagnostic": sp_status
+        },
         "configuration": {
             "openai": bool(os.getenv("OPENAI_API_KEY")),
             "sharepoint_site": bool(os.getenv("SHAREPOINT_SITE_URL")),
@@ -178,8 +184,10 @@ async def chat(request: ChatRequest):
 
 def run_ingestion():
     """Background task for ingestion."""
+    global INGESTION_STATUS, LAST_INGESTION_ERROR
     from rag_service import collection
     try:
+        INGESTION_STATUS = "Starting (Clearing DB)..."
         log_event("Starting SharePoint background ingestion...")
         
         # CLEAR EXISTING DATA BEFORE SYNC
@@ -192,21 +200,26 @@ def run_ingestion():
         except Exception as e:
             log_event(f"Note: Could not clear KB (it might already be empty): {e}")
 
+        INGESTION_STATUS = "Connecting to SharePoint..."
         doc_lib = os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents")
         files, drive_id, token = list_files_in_document_library(doc_lib)
         
         if not files:
+            INGESTION_STATUS = "Error: No files found or connection failed"
+            LAST_INGESTION_ERROR = "SharePoint list returned empty or Auth failed."
             log_event("No files found or connection failed during background sync.")
             return
 
+        INGESTION_STATUS = f"Processing {len(files)} files..."
         log_event(f"Found {len(files)} files. Starting processing...")
         sync_dir = os.path.join(os.path.dirname(__file__), "synced_documents")
         if not os.path.exists(sync_dir):
             os.makedirs(sync_dir)
 
         ingested_count = 0
-        for file_info in files:
+        for i, file_info in enumerate(files):
             file_name = file_info["name"]
+            INGESTION_STATUS = f"Syncing {i+1}/{len(files)}: {file_name}"
             log_event(f"BG Processing: {file_name}")
             
             content = download_file_content(file_info["server_relative_url"], drive_id, token)
@@ -229,8 +242,12 @@ def run_ingestion():
                         add_document_to_kb(chunk_id, chunk, metadata)
                 
                 ingested_count += 1
+        
+        INGESTION_STATUS = f"Complete: {ingested_count} files ingested."
         log_event(f"Background ingestion complete. {ingested_count} files processed.")
     except Exception as e:
+        INGESTION_STATUS = f"Critical Error: {str(e)}"
+        LAST_INGESTION_ERROR = str(e)
         log_event(f"Error in background ingestion: {e}")
 
 @app.post("/ingest")

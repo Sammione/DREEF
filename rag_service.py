@@ -23,7 +23,7 @@ load_dotenv()
 db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chroma_db")
 client = chromadb.PersistentClient(path=db_path)
 collection = client.get_or_create_collection(
-    name="dreef_kb",
+    name="drfeer_kb",
     embedding_function=embedding_functions.OpenAIEmbeddingFunction(
         api_key=os.getenv("OPENAI_API_KEY"),
         model_name="text-embedding-3-small"
