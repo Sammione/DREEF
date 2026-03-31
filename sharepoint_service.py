@@ -111,10 +111,11 @@ def list_files_in_document_library(doc_lib_name="Documents"):
         # Try to find the drive by name (case insensitive) or use the first one
         target_drive = next((d for d in drives if d['name'].lower() == doc_lib_name.lower()), None)
         if not target_drive and drives:
+            print(f"Target '{doc_lib_name}' not found. Available drives: {[d['name'] for d in drives]}")
             target_drive = drives[0] # Fallback to first drive
             
         if not target_drive:
-            print(f"No document library found matching '{doc_lib_name}'")
+            print(f"No document library found. All available: {[d['name'] for d in drives]}")
             return [], None, token
             
         drive_id = target_drive['id']
@@ -203,7 +204,7 @@ def extract_text_from_binary(content, file_name):
             text = "\n".join([para.text for para in doc.paragraphs])
             
         else:
-            return [] # Unsupported file type returns empty list of chunks
+            return []
             
         # Return chunks instead of full text
         return chunk_text(text)

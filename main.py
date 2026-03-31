@@ -48,9 +48,15 @@ async def startup_event():
     log_event("Application Startup initiated.")
     try:
         initialize_mock_kb()
-        log_event("Mock Knowledge Base ensured/initialized.")
+        log_event("Mock Knowledge Base ensured/initialized (Empty).")
+        
+        # AUTO INGEST ON STARTUP IF EMPTY
+        from rag_service import collection
+        if collection.count() == 0:
+            log_event("Collection empty on startup. Triggering auto-ingest...")
+            run_ingestion() # Sync call on startup (Fine for initial cache)
     except Exception as e:
-        log_event(f"Error initializing mock KB: {e}")
+        log_event(f"Error during startup sync: {e}")
 
 # Configure CORS
 app.add_middleware(
@@ -86,7 +92,11 @@ async def health():
     
     # SharePoint Drive resolution check
     sp_status = "Not Checked"
+    coll_count = 0
     try:
+        from rag_service import collection
+        coll_count = collection.count()
+        
         from sharepoint_service import list_files_in_document_library
         files, drive_id, token = list_files_in_document_library(os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents"))
         if drive_id:
@@ -99,6 +109,7 @@ async def health():
     return {
         "status": "online",
         "service": "DREEF AI Backend",
+        "collection_count": coll_count,
         "memory": mem_stats,
         "ingestion": {
             "current_status": INGESTION_STATUS,
@@ -108,9 +119,8 @@ async def health():
         "configuration": {
             "openai": bool(os.getenv("OPENAI_API_KEY")),
             "sharepoint_site": bool(os.getenv("SHAREPOINT_SITE_URL")),
-            "sharepoint_client_id": bool(os.getenv("SHAREPOINT_CLIENT_ID")),
-            "database_connected": os.getenv("DB_CONNECTION_STRING") is not None,
-            "pyodbc_available": True 
+            "sharepoint_doc_lib": os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents"),
+            "database_connected": os.getenv("DB_CONNECTION_STRING") is not None
         }
     }
 
