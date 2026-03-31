@@ -50,11 +50,13 @@ async def startup_event():
         initialize_mock_kb()
         log_event("Mock Knowledge Base ensured/initialized (Empty).")
         
-        # AUTO INGEST ON STARTUP IF EMPTY
+        # AUTO INGEST ON STARTUP IF EMPTY (In Background Thread)
         from rag_service import collection
         if collection.count() == 0:
-            log_event("Collection empty on startup. Triggering auto-ingest...")
-            run_ingestion() # Sync call on startup (Fine for initial cache)
+            log_event("Collection empty on startup. Triggering auto-ingest in background thread...")
+            import threading
+            thread = threading.Thread(target=run_ingestion)
+            thread.start()
     except Exception as e:
         log_event(f"Error during startup sync: {e}")
 
