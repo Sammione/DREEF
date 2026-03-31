@@ -424,7 +424,7 @@ body {
   }
 
   .input-area {
-    padding: 1rem;
+    padding: 1rem 1rem 3rem; /* Lifted up for better mobile reach */
   }
 
   .input-wrapper {
