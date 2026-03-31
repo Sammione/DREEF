@@ -23,6 +23,10 @@ function App() {
   const textareaRef = useRef(null);
 
   useEffect(() => {
+    // Open sidebar by default on desktop
+    if (window.innerWidth > 768) {
+      setIsSidebarOpen(true);
+    }
     scrollToBottom();
     autoResizeTextarea();
   }, [messages, input]);
@@ -165,7 +169,7 @@ function App() {
         </button>
 
         <div className="history-section">
-          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '1rem 0 0.5rem 0.5rem', fontWeight: 600 }}>Recent Chats</div>
+          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', margin: '1rem 0 0.75rem 0.5rem', fontWeight: 600, letterSpacing: '0.05em' }}>Recent Chats</div>
           {chatHistory.length > 0 ? chatHistory.slice(0, 10).map((session, i) => (
             <div key={i} className={`history-item ${(session.id || session) === sessionId ? 'active' : ''}`} onClick={() => loadSession(session.id || session)}>
               <MessageSquare size={14} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
