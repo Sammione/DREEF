@@ -82,10 +82,23 @@ async def health():
     except:
         mem_stats = "unavailable"
     
+    # SharePoint Drive resolution check
+    sp_status = "Not Checked"
+    try:
+        from sharepoint_service import list_files_in_document_library
+        files, drive_id, token = list_files_in_document_library(os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents"))
+        if drive_id:
+            sp_status = f"Connected (Found {len(files)} files)"
+        else:
+            sp_status = "Connected to Site but Drive not found"
+    except Exception as e:
+        sp_status = f"Error: {str(e)}"
+
     return {
         "status": "online",
         "service": "DREEF AI Backend",
         "memory": mem_stats,
+        "sharepoint_diagnostic": sp_status,
         "configuration": {
             "openai": bool(os.getenv("OPENAI_API_KEY")),
             "sharepoint_site": bool(os.getenv("SHAREPOINT_SITE_URL")),
