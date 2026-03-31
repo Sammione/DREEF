@@ -11,7 +11,7 @@ def generate_chat_response(messages, model="gpt-4o"):
         response = client.chat.completions.create(
             model=model,
             messages=messages,
-            temperature=0.0,
+            temperature=0.7,
             max_tokens=2048
         )
         return response.choices[0].message.content

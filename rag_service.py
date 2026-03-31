@@ -57,14 +57,18 @@ def search_kb(query, n_results=5):
         # Format as numbered snippets with metadata
         formatted_snippets = []
         for i, (doc, meta) in enumerate(zip(documents, metadatas)):
-            source_name = meta.get('filename') or meta.get('source') or "Unknown Source"
+            source_name = meta.get('filename') or meta.get('source') or "Internal Document"
             web_url = meta.get('webUrl', None)
-            source_info = f"Source: {source_name}"
-            if web_url:
-                source_info += f" (Link: {web_url})"
-            formatted_snippets.append(f"Snippet [{i+1}]:\nContent: {doc}\n{source_info}")
             
-        context = "\n\n---\n\n".join(formatted_snippets)
+            snippet_text = (
+                f"=== DOCUMENT SNIPPET {i+1} ===\n"
+                f"SOURCE: {source_name}\n"
+                f"URL: {web_url if web_url else 'No link available'}\n"
+                f"CONTENT:\n{doc}\n"
+            )
+            formatted_snippets.append(snippet_text)
+            
+        context = "\n\n".join(formatted_snippets)
         return context
     except Exception as e:
         print(f"Error searching KB: {e}")
