@@ -214,7 +214,7 @@ def run_ingestion():
 
         INGESTION_STATUS = "Connecting to SharePoint..."
         doc_lib = os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents")
-        files, drive_id, token = list_files_in_document_library(doc_lib)
+        files, drive_id, token = list_files_in_document_library(doc_lib, logger=log_event)
         
         if not files:
             INGESTION_STATUS = "Error: No files found or connection failed"

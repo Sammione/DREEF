@@ -47,43 +47,47 @@ def list_all_files_recursively(site_id, drive_id, folder_id='root', token=None):
     """
     if not token:
         token = get_graph_token()
+def list_all_files_recursively(site_id, drive_id, folder_id, token, logger=None):
+    """Recursively list all files and folders in a drive."""
+    all_files = []
     
-    headers = {"Authorization": f"Bearer {token}"}
+    url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{folder_id}/children"
     if folder_id == 'root':
         url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/root/children"
-    else:
-        url = f"https://graph.microsoft.com/v1.0/drives/{drive_id}/items/{folder_id}/children"
+        
+    msg = f"Scanning folder: {folder_id}"
+    if logger: logger(msg)
+    else: print(msg)
     
-    all_files = []
-    try:
-        resp = requests.get(url, headers=headers, timeout=10)
-        resp.raise_for_status()
-        items = resp.json().get('value', [])
-        print(f"Items in folder {folder_id}: {len(items)}")
-        
-        for item in items:
-            if 'file' in item:
-                all_files.append({
-                    "name": item['name'],
-                    "server_relative_url": item['id'], # Graph Item ID
-                    "parent_id": folder_id,
-                    "webUrl": item.get('webUrl', '') # For citations
-                })
-            elif 'folder' in item:
-                # Recurse into folders
-                print(f"Entering folder: {item['name']}")
-                sub_files = list_all_files_recursively(site_id, drive_id, item['id'], token)
-                all_files.extend(sub_files)
-        
-        return all_files
-    except Exception as e:
-        print(f"Error listing items in folder {folder_id}: {e}")
+    resp = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
+    if resp.status_code != 200:
+        msg = f"Failed to list folder {folder_id}: {resp.status_code}"
+        if logger: logger(msg)
+        else: print(msg)
         return []
+        
+    items = resp.json().get('value', [])
+    for item in items:
+        if 'file' in item:
+            all_files.append({
+                "name": item['name'],
+                "server_relative_url": item['id'],
+                "webUrl": item.get('webUrl', "")
+            })
+        elif 'folder' in item:
+            msg = f"Entering folder: {item['name']}"
+            if logger: logger(msg)
+            else: print(msg)
+            sub_files = list_all_files_recursively(site_id, drive_id, item['id'], token, logger=logger)
+            all_files.extend(sub_files)
+            
+    return all_files
 
-def list_files_in_document_library(doc_lib_name="Documents"):
+def list_files_in_document_library(doc_lib_name="Documents", logger=None):
     """List all files in the specified library using multi-method discovery."""
     token = get_graph_token()
     if not token:
+        if logger: logger("Failed to obtain Graph token.")
         return [], None, None
         
     SHAREPOINT_SITE_URL = os.getenv("SHAREPOINT_SITE_URL")
@@ -91,59 +95,65 @@ def list_files_in_document_library(doc_lib_name="Documents"):
     hostname = parsed.netloc
     site_path = parsed.path.rstrip('/')
     
-    # METHOD 1: Hostname:SitePath (Fastest)
+    # METHOD 1: Hostname:SitePath
     site_url = f"https://graph.microsoft.com/v1.0/sites/{hostname}:{site_path}"
-    resp = requests.get(site_url, headers={"Authorization": f"Bearer {token}"})
+    resp = requests.get(site_url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
     
     site_id = None
     if resp.status_code == 200:
         site_id = resp.json().get('id')
     
-    # METHOD 2: Site Search fallback (If SitePath resolver fails)
+    # METHOD 2: Site Search fallback
     if not site_id:
-        print(f"Method 1 (Path) failed for {site_path}. Trying Method 2 (Search)...")
+        msg = f"URL resolve failed ({resp.status_code}). Trying site search for name..."
+        if logger: logger(msg)
+        else: print(msg)
         site_name = site_path.split('/')[-1]
         search_url = f"https://graph.microsoft.com/v1.0/sites?search={site_name}"
-        search_resp = requests.get(search_url, headers={"Authorization": f"Bearer {token}"})
+        search_resp = requests.get(search_url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
         if search_resp.status_code == 200:
             sites = search_resp.json().get('value', [])
-            # Find the site that matches our hostname
             target = next((s for s in sites if hostname in s.get('webUrl', '')), None)
             if target:
                 site_id = target.get('id')
 
     if not site_id:
-        print(f"Could not resolve site ID for {SHAREPOINT_SITE_URL}")
+        msg = f"Critical Error: Could not resolve site ID for {SHAREPOINT_SITE_URL}"
+        if logger: logger(msg)
+        else: print(msg)
         return [], None, token
 
-    print(f"Resolved Site ID: {site_id}")
+    msg = f"Resolved Site ID: {site_id}"
+    if logger: logger(msg)
+    else: print(msg)
     
     # List available drives
     drives_url = f"https://graph.microsoft.com/v1.0/sites/{site_id}/drives"
-    resp = requests.get(drives_url, headers={"Authorization": f"Bearer {token}"})
+    resp = requests.get(drives_url, headers={"Authorization": f"Bearer {token}"}, timeout=15)
     
     if resp.status_code == 200:
         drives = resp.json().get('value', [])
-        
-        # Try to find the drive by name (case insensitive)
         target_drive = next((d for d in drives if d['name'].lower() == doc_lib_name.lower()), None)
         
-        # Fallback 1: First available drive
         if not target_drive and drives:
-            print(f"Target '{doc_lib_name}' not found. Fallback to: {drives[0]['name']}")
+            msg = f"Drive '{doc_lib_name}' not found. Fallback to: {drives[0]['name']}"
+            if logger: logger(msg)
+            else: print(msg)
             target_drive = drives[0]
             
         if not target_drive:
-            print("No drives found on site.")
+            if logger: logger("No drives found.")
             return [], None, token
             
         drive_id = target_drive['id']
-        print(f"Using Drive: {target_drive['name']} ({drive_id})")
+        msg = f"Using Drive: {target_drive['name']}"
+        if logger: logger(msg)
+        else: print(msg)
         
-        files = list_all_files_recursively(site_id, drive_id, 'root', token)
+        files = list_all_files_recursively(site_id, drive_id, 'root', token, logger=logger)
         return files, drive_id, token
     else:
-        print(f"Failed to fetch drives: {resp.status_code} - {resp.text}")
+        if logger: logger(f"Failed to fetch drives: {resp.status_code}")
         return [], None, token
 
 def download_file_content(file_id, drive_id=None, token=None):
