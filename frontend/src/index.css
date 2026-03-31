@@ -374,6 +374,7 @@ body {
 
 /* Sidebar Overlay */
 .sidebar-overlay {
+  display: none; /* Hidden on desktop */
   position: fixed;
   top: 0;
   left: 0;
@@ -446,5 +447,9 @@ body {
 
   .mobile-close-btn {
     display: flex;
+  }
+
+  .sidebar-overlay {
+    display: block;
   }
 }
