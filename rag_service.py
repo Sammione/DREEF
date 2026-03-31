@@ -23,7 +23,7 @@ load_dotenv()
 db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chroma_db")
 client = chromadb.PersistentClient(path=db_path)
 collection = client.get_or_create_collection(
-    name="drfeer_kb",
+    name="dreef_kb",
     embedding_function=embedding_functions.OpenAIEmbeddingFunction(
         api_key=os.getenv("OPENAI_API_KEY"),
         model_name="text-embedding-3-small"
@@ -79,12 +79,12 @@ def initialize_mock_kb():
     if collection.count() == 0:
         add_document_to_kb(
             "doc1", 
-            "DRFEER Company Policy: Employees are entitled to 25 days of annual leave. Working hours are from 9 AM to 5 PM.",
+            "DREEF Company Policy: Employees are entitled to 25 days of annual leave. Working hours are from 9 AM to 5 PM.",
             {"filename": "HR_Policy.pdf", "source": "Company Handbook"}
         )
         add_document_to_kb(
             "doc2", 
-            "Project DRFEER: The goal is to build an AI platform that integrates SharePoint and SQL Databases for company-wide intelligence.",
+            "Project DREEF: The goal is to build an AI platform that integrates SharePoint and SQL Databases for company-wide intelligence.",
             {"filename": "Project_Drfeer_Overview.docx", "source": "Internal Architecture"}
         )
         print("Mock Knowledge Base initialized with 2 documents.")

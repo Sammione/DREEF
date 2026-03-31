@@ -27,7 +27,7 @@ from sharepoint_service import list_files_in_document_library, download_file_con
 load_dotenv()
 
 # Starting API
-app = FastAPI(title="DRFEER ChatGPT-like API")
+app = FastAPI(title="DREEF ChatGPT-like API")
 
 # Global history of logs for diagnostics (accessible via /logs)
 GLOBAL_LOGS = []
@@ -66,7 +66,7 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 async def root():
-    return {"message": "DRFEER ChatGPT-like API is running"}
+    return {"message": "DREEF ChatGPT-like API is running"}
 
 @app.get("/health")
 async def health():
@@ -84,7 +84,7 @@ async def health():
     
     return {
         "status": "online",
-        "service": "DRFEER AI Backend",
+        "service": "DREEF AI Backend",
         "memory": mem_stats,
         "configuration": {
             "openai": bool(os.getenv("OPENAI_API_KEY")),
@@ -122,19 +122,19 @@ async def chat(request: ChatRequest):
             log_event("No relevant KB documents found.")
             knowledge_context = "No specific documents found in the Knowledge Base for this query."
         
-        # 3. Prepare OpenAI prompt
+        
         log_event("Calling OpenAI Chat Completion...")
         system_msg = {
             "role": "system", 
             "content": (
-                "You are the DRFEER Intelligent Consultant, a highly sophisticated AI expert trained to analyze corporate data. "
+                "You are the DREEF Intelligent Consultant, a highly sophisticated AI expert trained to analyze corporate data. "
                 "Your objective is to provide professional, synthesized, and conversational responses based on SharePoint documents. \n\n"
                 "GUIDELINES:\n"
-                "1. NEVER just copy and paste text. Always rephrase and explain the information in your own professional words.\n"
-                "2. If the answer is in the documents, summarize the findings clearly. If the answer is missing, state clearly that you don't have that specific information in your current repository.\n"
-                "3. STAKEHOLDER FOCUS: Structure your answers for an executive audience—be concise but thorough.\n"
-                "4. CITATIONS: At the end of your response, list the sources you used. Format: 'Sources: [Filename](URL)'.\n"
-                "5. PERSONALITY: Be helpful, sharp, and corporate-toned. Respond naturally to status checks and greetings.\n\n"
+                "1. NEVER just copy and paste text. Always rephrase and explain information in your own professional words.\n"
+                "2. If the answer is in the documents, summarize clearly. If not available, state that you don't have that specific information in your repository.\n"
+                "3. GREETINGS: For greetings (Hello, Hi, etc.), simply respond: 'How can I assist you today?' (Do not add long data-related suffixes).\n"
+                "4. CITATIONS: List used sources at the end: 'Sources: [Filename](URL)'.\n"
+                "5. PERSONALITY: Helpful, sharp, and corporate-toned.\n\n"
                 "KNOWLEDGE BASE CONTEXT:\n"
                 "--------------------\n"
                 f"{knowledge_context}\n"
