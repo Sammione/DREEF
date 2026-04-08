@@ -1,0 +1,732 @@
+{
+  "placeholders": [
+    "COMMUNITY NAME",
+    "Date",
+    "Community Name",
+    "Name of LGA",
+    "Name of state"
+  ],
+  "tables": [
+    {
+      "index": 0,
+      "headers": [
+        "Community Name",
+        "LGA",
+        "Coordinates (Lat, Long)",
+        "State"
+      ],
+      "placeholders": [
+        "Community Name",
+        "Name of LGA",
+        "Longitude and Latitude",
+        "Name of state"
+      ],
+      "row_count": 2,
+      "col_count": 4
+    },
+    {
+      "index": 1,
+      "headers": [
+        "Category",
+        "Details"
+      ],
+      "placeholders": [],
+      "row_count": 15,
+      "col_count": 2
+    },
+    {
+      "index": 2,
+      "headers": [
+        "Use Case",
+        "Current Energy Source",
+        "Replacement"
+      ],
+      "placeholders": [],
+      "row_count": 5,
+      "col_count": 3
+    },
+    {
+      "index": 3,
+      "headers": [
+        "Name of Processor",
+        "Site Longitude",
+        "Site Latitude",
+        "Minigrid Longitude",
+        "Minigrid Latitude",
+        "Distance (km)"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 6
+    },
+    {
+      "index": 4,
+      "headers": [
+        "People interviewed",
+        "166"
+      ],
+      "placeholders": [],
+      "row_count": 5,
+      "col_count": 2
+    },
+    {
+      "index": 5,
+      "headers": [
+        "Gender",
+        "Male",
+        "32"
+      ],
+      "placeholders": [],
+      "row_count": 2,
+      "col_count": 3
+    },
+    {
+      "index": 6,
+      "headers": [
+        "Crops",
+        "cassava",
+        "6"
+      ],
+      "placeholders": [],
+      "row_count": 7,
+      "col_count": 3
+    },
+    {
+      "index": 7,
+      "headers": [
+        "Total Annual Area Planted",
+        "cassava",
+        "95,000"
+      ],
+      "placeholders": [],
+      "row_count": 7,
+      "col_count": 3
+    },
+    {
+      "index": 8,
+      "headers": [
+        "Total Annual Quantity Harvested",
+        "cassava",
+        "740"
+      ],
+      "placeholders": [],
+      "row_count": 7,
+      "col_count": 3
+    },
+    {
+      "index": 9,
+      "headers": [
+        "Machine Type",
+        "Quantity",
+        "Power Source",
+        "Rated Power"
+      ],
+      "placeholders": [],
+      "row_count": 3,
+      "col_count": 4
+    },
+    {
+      "index": 10,
+      "headers": [
+        "Machine Type",
+        "Quantity",
+        "Power Source",
+        "Rated Power",
+        "Capacity (Approx.)"
+      ],
+      "placeholders": [],
+      "row_count": 2,
+      "col_count": 5
+    },
+    {
+      "index": 11,
+      "headers": [
+        "Total Quantity Processed (Peak)",
+        "Cassava",
+        "960"
+      ],
+      "placeholders": [],
+      "row_count": 2,
+      "col_count": 3
+    },
+    {
+      "index": 12,
+      "headers": [
+        "Total Quantity Processed (Scarce)",
+        "Cassava",
+        "480"
+      ],
+      "placeholders": [],
+      "row_count": 2,
+      "col_count": 3
+    },
+    {
+      "index": 13,
+      "headers": [
+        "Average Quantity (Peak)",
+        "Cassava",
+        "240"
+      ],
+      "placeholders": [],
+      "row_count": 2,
+      "col_count": 3
+    },
+    {
+      "index": 14,
+      "headers": [
+        "Average Quantity Processed (Scarce)",
+        "Cassava",
+        "120"
+      ],
+      "placeholders": [],
+      "row_count": 2,
+      "col_count": 3
+    },
+    {
+      "index": 15,
+      "headers": [
+        "Machines",
+        "Specification",
+        "Fuel Type",
+        "No of Machine",
+        "Annual Fuel Consumption (L)",
+        "Co2 Emissions (kg C02/year)"
+      ],
+      "placeholders": [],
+      "row_count": 6,
+      "col_count": 6
+    },
+    {
+      "index": 16,
+      "headers": [
+        "E-Mobility",
+        "12"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 2
+    },
+    {
+      "index": 17,
+      "headers": [
+        "SME",
+        "18"
+      ],
+      "placeholders": [],
+      "row_count": 13,
+      "col_count": 2
+    },
+    {
+      "index": 18,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Power rating (kW/hr)",
+        "Quantity",
+        "Energy Source"
+      ],
+      "placeholders": [],
+      "row_count": 3,
+      "col_count": 5
+    },
+    {
+      "index": 19,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Power rating (kW/hr)",
+        "Quantity",
+        "Energy Source"
+      ],
+      "placeholders": [],
+      "row_count": 7,
+      "col_count": 5
+    },
+    {
+      "index": 20,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Power rating (kW/hr)",
+        "Quantity",
+        "Energy Source"
+      ],
+      "placeholders": [],
+      "row_count": 6,
+      "col_count": 5
+    },
+    {
+      "index": 21,
+      "headers": [
+        "E-Mobility Vehicles",
+        "Capacity",
+        "Quantity",
+        "Charging Rate\u00a0(kW/hr\u00a0)",
+        "Charging Time \u00a0(Hours)"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 5
+    },
+    {
+      "index": 22,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Power rating (kW/hr)",
+        "Quantity",
+        "Energy Source"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 5
+    },
+    {
+      "index": 23,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Power rating (kW/hr)",
+        "Quantity",
+        "Energy Source"
+      ],
+      "placeholders": [],
+      "row_count": 3,
+      "col_count": 5
+    },
+    {
+      "index": 24,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Power rating (kW/hr)",
+        "Quantity",
+        "Energy Source"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 5
+    },
+    {
+      "index": 25,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Power rating (kW/hr)",
+        "Quantity",
+        "Energy Source"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 5
+    },
+    {
+      "index": 26,
+      "headers": [
+        "E-Mobility Vehicles",
+        "Capacity",
+        "Quantity",
+        "Charging Rate\u00a0(kW/hr\u00a0)",
+        "Charging Time \u00a0(Hours)"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 5
+    },
+    {
+      "index": 27,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Power rating (kW/hr)",
+        "Quantity",
+        "Energy Source"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 5
+    },
+    {
+      "index": 28,
+      "headers": [
+        "ITEM",
+        "kW/hr",
+        "6 hour day work"
+      ],
+      "placeholders": [],
+      "row_count": 6,
+      "col_count": 3
+    },
+    {
+      "index": 29,
+      "headers": [
+        "Room / Area",
+        "Dimension (m)",
+        "Area (m\u00b2)",
+        "Notes / IoT Deployment"
+      ],
+      "placeholders": [],
+      "row_count": 3,
+      "col_count": 4
+    },
+    {
+      "index": 30,
+      "headers": [
+        "Structure",
+        "Description"
+      ],
+      "placeholders": [],
+      "row_count": 8,
+      "col_count": 2
+    },
+    {
+      "index": 31,
+      "headers": [
+        "Aspect",
+        "Implementation"
+      ],
+      "placeholders": [],
+      "row_count": 6,
+      "col_count": 2
+    },
+    {
+      "index": 32,
+      "headers": [
+        "Item",
+        "Details",
+        "Quantity",
+        "Unit Price",
+        "Total Price"
+      ],
+      "placeholders": [],
+      "row_count": 7,
+      "col_count": 5
+    },
+    {
+      "index": 33,
+      "headers": [
+        "Item",
+        "Details",
+        "Quantity",
+        "Unit Price",
+        "Total Price"
+      ],
+      "placeholders": [],
+      "row_count": 6,
+      "col_count": 5
+    },
+    {
+      "index": 34,
+      "headers": [
+        "Item",
+        "Details",
+        "Quantity",
+        "Unit Price",
+        "Total Price"
+      ],
+      "placeholders": [],
+      "row_count": 6,
+      "col_count": 5
+    },
+    {
+      "index": 35,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Quantity",
+        "Unit Price",
+        "Total Price"
+      ],
+      "placeholders": [],
+      "row_count": 3,
+      "col_count": 5
+    },
+    {
+      "index": 36,
+      "headers": [
+        "Cassava",
+        "",
+        "",
+        "NEW",
+        "",
+        "RET",
+        ""
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 7
+    },
+    {
+      "index": 37,
+      "headers": [
+        "Oil palm",
+        "",
+        "",
+        "NEW",
+        "",
+        "RET",
+        ""
+      ],
+      "placeholders": [],
+      "row_count": 5,
+      "col_count": 7
+    },
+    {
+      "index": 38,
+      "headers": [
+        "E-Mobility Vehicles",
+        "Capacity",
+        "Quantity",
+        "Unit Price",
+        "Total Price"
+      ],
+      "placeholders": [],
+      "row_count": 5,
+      "col_count": 5
+    },
+    {
+      "index": 39,
+      "headers": [
+        "Machine",
+        "Capacity",
+        "Quantity",
+        "Unit Price",
+        "Total Price"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 5
+    },
+    {
+      "index": 40,
+      "headers": [
+        "S/N",
+        "",
+        "Item",
+        "Qty",
+        "Unit Cost (\u20a6)",
+        "Total (\u20a6)"
+      ],
+      "placeholders": [],
+      "row_count": 13,
+      "col_count": 6
+    },
+    {
+      "index": 41,
+      "headers": [
+        "S/N",
+        "ITEM",
+        "PRICE (\u20a6)"
+      ],
+      "placeholders": [],
+      "row_count": 8,
+      "col_count": 3
+    },
+    {
+      "index": 42,
+      "headers": [
+        "Individual Model - New Equipment",
+        "Farming Equipment",
+        "5",
+        "24",
+        "70,995"
+      ],
+      "placeholders": [],
+      "row_count": 5,
+      "col_count": 5
+    },
+    {
+      "index": 43,
+      "headers": [
+        "Individual Model - Retrofit",
+        "Farming Equipment",
+        "5",
+        "24",
+        "71,381"
+      ],
+      "placeholders": [],
+      "row_count": 5,
+      "col_count": 5
+    },
+    {
+      "index": 44,
+      "headers": [
+        "Agrohub Model",
+        "Farming Equipment",
+        "5",
+        "24",
+        "84,475"
+      ],
+      "placeholders": [],
+      "row_count": 5,
+      "col_count": 5
+    },
+    {
+      "index": 45,
+      "headers": [
+        "Business Model",
+        "Explanation"
+      ],
+      "placeholders": [],
+      "row_count": 9,
+      "col_count": 2
+    },
+    {
+      "index": 46,
+      "headers": [
+        "Individual Model - New Equipment",
+        ""
+      ],
+      "placeholders": [],
+      "row_count": 9,
+      "col_count": 2
+    },
+    {
+      "index": 47,
+      "headers": [
+        "Individual Model - Retrofit",
+        ""
+      ],
+      "placeholders": [],
+      "row_count": 9,
+      "col_count": 2
+    },
+    {
+      "index": 48,
+      "headers": [
+        "Agrohub Model",
+        ""
+      ],
+      "placeholders": [],
+      "row_count": 12,
+      "col_count": 2
+    },
+    {
+      "index": 49,
+      "headers": [
+        "[Community Name]",
+        "Effective Daily Demand (kWh)",
+        "Effective Annual Demand (kWh)",
+        "No of Beneficiaries",
+        "Average kWh Tariff",
+        "Daily Revenue per Category (#/kWh)",
+        "Daily Average Revenue (#/kWh)"
+      ],
+      "placeholders": [
+        "Community Name"
+      ],
+      "row_count": 7,
+      "col_count": 7
+    },
+    {
+      "index": 50,
+      "headers": [
+        "S/N",
+        "Title",
+        "Responsibility",
+        "Duration",
+        "Timeline"
+      ],
+      "placeholders": [],
+      "row_count": 12,
+      "col_count": 5
+    },
+    {
+      "index": 51,
+      "headers": [
+        "KPI Category",
+        "Indicator",
+        "Frequency"
+      ],
+      "placeholders": [],
+      "row_count": 12,
+      "col_count": 3
+    },
+    {
+      "index": 52,
+      "headers": [
+        "Tool / System",
+        "Purpose",
+        "Managed By"
+      ],
+      "placeholders": [],
+      "row_count": 6,
+      "col_count": 3
+    },
+    {
+      "index": 53,
+      "headers": [
+        "S/N",
+        "ITEM",
+        "",
+        "",
+        ""
+      ],
+      "placeholders": [],
+      "row_count": 6,
+      "col_count": 5
+    },
+    {
+      "index": 54,
+      "headers": [
+        "Risk Category",
+        "Description"
+      ],
+      "placeholders": [],
+      "row_count": 10,
+      "col_count": 2
+    },
+    {
+      "index": 55,
+      "headers": [
+        "Risk",
+        "Mitigation Strategy"
+      ],
+      "placeholders": [],
+      "row_count": 10,
+      "col_count": 2
+    },
+    {
+      "index": 56,
+      "headers": [
+        "Impact Area",
+        "Metric",
+        "Projected Outcome"
+      ],
+      "placeholders": [],
+      "row_count": 8,
+      "col_count": 3
+    },
+    {
+      "index": 57,
+      "headers": [
+        "SDG",
+        "Goal Description",
+        "Project Contribution"
+      ],
+      "placeholders": [],
+      "row_count": 4,
+      "col_count": 3
+    },
+    {
+      "index": 58,
+      "headers": [
+        "Lesson Learned",
+        "Recommended Best Practice"
+      ],
+      "placeholders": [],
+      "row_count": 8,
+      "col_count": 2
+    },
+    {
+      "index": 59,
+      "headers": [
+        "Lesson Learned",
+        "Recommended Best Practice"
+      ],
+      "placeholders": [],
+      "row_count": 8,
+      "col_count": 2
+    }
+  ]
+}
