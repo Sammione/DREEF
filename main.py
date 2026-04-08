@@ -14,11 +14,15 @@ except ImportError:
     except Exception as e:
         print(f"Warning: Could not load sqlite3 or pysqlite3: {e}")
 
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from dotenv import load_dotenv
+
+from auth import require_auth
 
 from database import store_chat_history, get_chat_history, get_all_sessions
 from openai_service import generate_chat_response
@@ -29,7 +33,18 @@ load_dotenv()
 
 # Starting API without mock data
 
-app = FastAPI(title="DRFEER ChatGPT-like API")
+app = FastAPI(title="DREEF AI Backend")
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Override FastAPI's default exception handler so 401 (and other structured errors)
+    are returned as a flat JSON body, matching the C# ResponseFactory / ExceptionMiddleware shape.
+    """
+    if isinstance(exc.detail, dict):
+        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 # Global history of logs for diagnostics (accessible via /logs)
 GLOBAL_LOGS = []
@@ -87,12 +102,12 @@ async def health():
     }
 
 @app.get("/logs")
-async def get_logs():
+async def get_logs(_: dict = Depends(require_auth)):
     """Access runtime diagnostic logs."""
     return {"logs": GLOBAL_LOGS}
 
 @app.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, _: dict = Depends(require_auth)):
     try:
         log_event(f">>> Processing /CHAT | User: {request.user_id} | Msg: {request.message[:50]}...")
         
@@ -148,7 +163,7 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/ingest")
-async def ingest_sharepoint_docs():
+async def ingest_sharepoint_docs(_: dict = Depends(require_auth)):
     """
     Trigger ingestion of documents from the configured SharePoint library.
     Also saves a physical copy to the 'synced_documents' folder.
@@ -211,7 +226,7 @@ async def ingest_sharepoint_docs():
         raise HTTPException(status_code=500, detail=f"Ingestion failed: {str(e)}")
 
 @app.get("/files")
-async def get_synced_files():
+async def get_synced_files(_: dict = Depends(require_auth)):
     """
     Get the list of files currently in the Knowledge Base.
     """
@@ -233,16 +248,62 @@ async def get_synced_files():
         return {"files": []}
 
 @app.get("/history")
-async def get_history(user_id: str, session_id: str):
+async def get_history(user_id: str, session_id: str, _: dict = Depends(require_auth)):
     """Get chat history for a specific session."""
     history = get_chat_history(user_id, session_id)
     return {"history": history}
 
 @app.get("/sessions")
-async def get_sessions(user_id: str):
+async def get_sessions(user_id: str, _: dict = Depends(require_auth)):
     """Get list of previous session IDs for a user."""
     sessions = get_all_sessions(user_id)
     return {"sessions": sessions}
+
+def _custom_openapi():
+    """
+    Override FastAPI's generated OpenAPI schema to add Bearer and Cookie security schemes,
+    matching the Swagger configuration in DREEF.EMS.API SwaggerConfiguration.cs.
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(
+        title="DREEF AI Backend",
+        version="v1",
+        description="DREEF AI Backend API",
+        routes=app.routes,
+    )
+
+    if "components" not in schema:
+        schema["components"] = {}
+
+    schema["components"]["securitySchemes"] = {
+        "Bearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": (
+                'JWT Authorization header using the Bearer scheme. '
+                'Paste the token only — Swagger will prepend "Bearer " automatically.'
+            ),
+        },
+        "Cookie": {
+            "type": "apiKey",
+            "in": "cookie",
+            "name": "access_token",
+            "description": "Cookie-based authentication using access_token cookie",
+        },
+    }
+
+    # Apply both schemes globally — every endpoint is covered
+    schema["security"] = [{"Bearer": []}, {"Cookie": []}]
+
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = _custom_openapi
+
 
 if __name__ == "__main__":
     import uvicorn

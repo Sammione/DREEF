@@ -5,7 +5,8 @@ trigger:
       - develop
   paths:
     include:
-      - src/**
+      - "*.py"
+      - requirements.txt
       - Dockerfile
       - azure-pipelines.yml
 
@@ -16,7 +17,8 @@ pr:
       - develop
   paths:
     include:
-      - src/**
+      - "*.py"
+      - requirements.txt
       - Dockerfile
       - azure-pipelines.yml
 
@@ -103,7 +105,10 @@ stages:
                                 "SHAREPOINT_CLIENT_ID=secretref:sharepoint-client-id" \
                                 "SHAREPOINT_CLIENT_SECRET=secretref:sharepoint-client-secret" \
                                 "AZURE_TENANT_ID=secretref:azure-tenant-id" \
-                                "SHAREPOINT_DOC_LIB=Shared Documents"
+                                "SHAREPOINT_DOC_LIB=Shared Documents" \
+                                "JWT_SECRET=secretref:jwt-secret" \
+                                "JWT_ISSUER=secretref:jwt-issuer" \
+                                "JWT_AUDIENCE=secretref:jwt-audience"
 
   - stage: DeployProd
     displayName: Deploy to Production Environment
@@ -138,4 +143,7 @@ stages:
                                 "SHAREPOINT_CLIENT_ID=secretref:sharepoint-client-id" \
                                 "SHAREPOINT_CLIENT_SECRET=secretref:sharepoint-client-secret" \
                                 "AZURE_TENANT_ID=secretref:azure-tenant-id" \
-                                "SHAREPOINT_DOC_LIB=Shared Documents"
+                                "SHAREPOINT_DOC_LIB=Shared Documents" \
+                                "JWT_SECRET=secretref:jwt-secret" \
+                                "JWT_ISSUER=secretref:jwt-issuer" \
+                                "JWT_AUDIENCE=secretref:jwt-audience"
