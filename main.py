@@ -1,6 +1,7 @@
 import sys
 import os
 
+# v1.0.1
 # --- CRITICAL: MUST BE AT THE VERY TOP TO PATCH SQLITE FOR CHROMADB ---
 try:
     import pysqlite3 as sqlite3
@@ -13,11 +14,15 @@ except ImportError:
     except Exception as e:
         print(f"Warning: Could not load sqlite3 or pysqlite3: {e}")
 
-from fastapi import FastAPI, HTTPException, Body, BackgroundTasks
+from fastapi import FastAPI, HTTPException, Body, BackgroundTasks, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from dotenv import load_dotenv
+
+from auth import require_auth
 
 from database import store_chat_history, get_chat_history, get_all_sessions
 from openai_service import generate_chat_response
@@ -26,8 +31,20 @@ from sharepoint_service import list_files_in_document_library, download_file_con
 
 load_dotenv()
 
-# Starting API
-app = FastAPI(title="DREEF ChatGPT-like API")
+# Starting API without mock data
+
+app = FastAPI(title="DREEF AI Backend")
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """
+    Override FastAPI's default exception handler so 401 (and other structured errors)
+    are returned as a flat JSON body, matching the C# ResponseFactory / ExceptionMiddleware shape.
+    """
+    if isinstance(exc.detail, dict):
+        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 # Global history of logs for diagnostics (accessible via /logs)
 GLOBAL_LOGS = []
@@ -127,12 +144,12 @@ async def health():
     }
 
 @app.get("/logs")
-async def get_logs():
+async def get_logs(_: dict = Depends(require_auth)):
     """Access runtime diagnostic logs."""
     return {"logs": GLOBAL_LOGS}
 
 @app.post("/chat")
-async def chat(request: ChatRequest):
+async def chat(request: ChatRequest, _: dict = Depends(require_auth)):
     try:
         log_event(f">>> Processing /CHAT | User: {request.user_id} | Msg: {request.message[:50]}...")
         
@@ -201,7 +218,7 @@ def run_ingestion():
     try:
         INGESTION_STATUS = "Starting (Clearing DB)..."
         log_event("Starting SharePoint background ingestion...")
-        
+
         # CLEAR EXISTING DATA BEFORE SYNC
         log_event("Clearing existing Knowledge Base documents for a clean sync...")
         try:
@@ -215,7 +232,7 @@ def run_ingestion():
         INGESTION_STATUS = "Connecting to SharePoint..."
         doc_lib = os.getenv("SHAREPOINT_DOC_LIB", "Shared Documents")
         files, drive_id, token = list_files_in_document_library(doc_lib, logger=log_event)
-        
+
         if not files:
             INGESTION_STATUS = "Error: No files found or connection failed"
             LAST_INGESTION_ERROR = "SharePoint list returned empty or Auth failed."
@@ -233,28 +250,28 @@ def run_ingestion():
             file_name = file_info["name"]
             INGESTION_STATUS = f"Syncing {i+1}/{len(files)}: {file_name}"
             log_event(f"BG Processing: {file_name}")
-            
+
             content = download_file_content(file_info["server_relative_url"], drive_id, token)
             if content:
                 file_path = os.path.join(sync_dir, file_name)
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
                 with open(file_path, "wb") as f:
                     f.write(content)
-                
+
                 if any(file_name.lower().endswith(ext) for ext in ['.txt', '.md', '.pdf', '.docx']):
                     chunks = extract_text_from_binary(content, file_name)
-                    for i, chunk in enumerate(chunks):
-                        chunk_id = f"sp_{file_name.replace(' ', '_')}_v{i}"
+                    for j, chunk in enumerate(chunks):
+                        chunk_id = f"sp_{file_name.replace(' ', '_')}_v{j}"
                         metadata = {
-                            "source": "SharePoint", 
-                            "filename": file_name, 
+                            "source": "SharePoint",
+                            "filename": file_name,
                             "webUrl": file_info.get("webUrl", ""),
-                            "chunk_index": i
+                            "chunk_index": j
                         }
                         add_document_to_kb(chunk_id, chunk, metadata)
-                
+
                 ingested_count += 1
-        
+
         INGESTION_STATUS = f"Complete: {ingested_count} files ingested."
         log_event(f"Background ingestion complete. {ingested_count} files processed.")
     except Exception as e:
@@ -263,13 +280,13 @@ def run_ingestion():
         log_event(f"Error in background ingestion: {e}")
 
 @app.post("/ingest")
-async def ingest_sharepoint_docs(background_tasks: BackgroundTasks):
-    """Trigger background ingestion."""
+async def ingest_sharepoint_docs(background_tasks: BackgroundTasks, _: dict = Depends(require_auth)):
+    """Trigger background ingestion of documents from the configured SharePoint library."""
     background_tasks.add_task(run_ingestion)
     return {"message": "Ingestion started in the background (Existing data cleared). Please check /logs for progress."}
 
 @app.get("/files")
-async def get_synced_files():
+async def get_synced_files(_: dict = Depends(require_auth)):
     """
     Get the list of files currently in the Knowledge Base.
     """
@@ -291,16 +308,62 @@ async def get_synced_files():
         return {"files": []}
 
 @app.get("/history")
-async def get_history(user_id: str, session_id: str):
+async def get_history(user_id: str, session_id: str, _: dict = Depends(require_auth)):
     """Get chat history for a specific session."""
     history = get_chat_history(user_id, session_id)
     return {"history": history}
 
 @app.get("/sessions")
-async def get_sessions(user_id: str):
+async def get_sessions(user_id: str, _: dict = Depends(require_auth)):
     """Get list of previous session IDs for a user."""
     sessions = get_all_sessions(user_id)
     return {"sessions": sessions}
+
+def _custom_openapi():
+    """
+    Override FastAPI's generated OpenAPI schema to add Bearer and Cookie security schemes,
+    matching the Swagger configuration in DREEF.EMS.API SwaggerConfiguration.cs.
+    """
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    schema = get_openapi(
+        title="DREEF AI Backend",
+        version="v1",
+        description="DREEF AI Backend API",
+        routes=app.routes,
+    )
+
+    if "components" not in schema:
+        schema["components"] = {}
+
+    schema["components"]["securitySchemes"] = {
+        "Bearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": (
+                'JWT Authorization header using the Bearer scheme. '
+                'Paste the token only — Swagger will prepend "Bearer " automatically.'
+            ),
+        },
+        "Cookie": {
+            "type": "apiKey",
+            "in": "cookie",
+            "name": "access_token",
+            "description": "Cookie-based authentication using access_token cookie",
+        },
+    }
+
+    # Apply both schemes globally — every endpoint is covered
+    schema["security"] = [{"Bearer": []}, {"Cookie": []}]
+
+    app.openapi_schema = schema
+    return app.openapi_schema
+
+
+app.openapi = _custom_openapi
+
 
 if __name__ == "__main__":
     import uvicorn
