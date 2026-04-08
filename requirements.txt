@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+python-jose[cryptography]
 pysqlite3-binary
 gunicorn
 openai
