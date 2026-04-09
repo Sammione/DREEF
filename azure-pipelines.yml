@@ -5,10 +5,10 @@ trigger:
       - develop
   paths:
     include:
-      - "*.py"
-      - requirements.txt
-      - Dockerfile
-      - azure-pipelines.yml
+      - dreefchat/**/*.py
+      - dreefchat/**/*.txt
+      - dreefchat/Dockerfile
+      - dreefchat/azure-pipelines.yml
 
 pr:
   branches:
@@ -17,10 +17,10 @@ pr:
       - develop
   paths:
     include:
-      - "*.py"
-      - requirements.txt
-      - Dockerfile
-      - azure-pipelines.yml
+      - dreefchat/**/*.py
+      - dreefchat/**/*.txt
+      - dreefchat/Dockerfile
+      - dreefchat/azure-pipelines.yml
 
 variables:
   dockerRegistryServiceConnection: "acr-service-connection"
@@ -58,7 +58,7 @@ stages:
                 -f Dockerfile \
                 .
             displayName: Build Docker Image
-            workingDirectory: $(Build.Repository.LocalPath)
+            workingDirectory: $(Build.Repository.LocalPath)/dreefchat
 
           - script: |
               docker push $(containerRegistry)/$(imageRepositoryTest):$(Build.BuildId)

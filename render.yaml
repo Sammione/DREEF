@@ -2,6 +2,7 @@ services:
   - type: web
     name: drfeer-ai-backend
     runtime: python
+    root: dreefchat
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn main:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
